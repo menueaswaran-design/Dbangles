@@ -3,7 +3,7 @@
 import React, { use, useEffect, useState } from "react";
 
 const API_URL = typeof window !== "undefined"
-  ? `${window.location.protocol}//${window.location.hostname}:3001/api/orders`
+  ? `${window.location.protocol}//${window.location.hostname}/api/orders`
   : "https://dbangles.vercel.app/api/orders";
 
 const statusColor = {
