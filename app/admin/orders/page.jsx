@@ -4,7 +4,7 @@ import React, { use, useEffect, useState } from "react";
 
 const API_URL = typeof window !== "undefined"
   ? `${window.location.protocol}//${window.location.hostname}:3001/api/orders`
-  : "http://localhost:3001/api/orders";
+  : "https://dbangles.vercel.app/api/orders";
 
 const statusColor = {
   Placed: "bg-yellow-100 text-yellow-700 animate-pulse",
