@@ -4,89 +4,142 @@ import Link from "next/link";
 
 export default function AdminDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-3">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-800 mb-4 text-center">
-          🛍️ Admin Dashboard
-        </h1>
+    <div className="min-h-screen bg-gray-50 px-6 py-6">
+      <div className="mx-auto max-w-7xl space-y-8">
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* Add Product Card */}
-          <Link href="/admin/add-product">
-            <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-pink-300">
-              <div className="text-3xl mb-2 text-center">➕</div>
-              <h2 className="text-sm font-semibold text-gray-800 text-center mb-1">
-                Add New Product
-              </h2>
-              <p className="text-gray-500 text-center text-xs">
-                Add bangles, dresses & accessories
-              </p>
-            </div>
-          </Link>
-
-          {/* View Products Card */}
-          <Link href="/admin/products">
-            <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-purple-300">
-              <div className="text-3xl mb-2 text-center">📦</div>
-              <h2 className="text-sm font-semibold text-gray-800 text-center mb-1">
-                View All Products
-              </h2>
-              <p className="text-gray-500 text-center text-xs">
-                Manage your product catalog
-              </p>
-            </div>
-          </Link>
-
-          {/* Orders Card */}
-          <Link href="/admin/orders">
-            <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-blue-300">
-              <div className="text-3xl mb-2 text-center">📋</div>
-              <h2 className="text-sm font-semibold text-gray-800 text-center mb-1">
-                View Orders
-              </h2>
-              <p className="text-gray-500 text-center text-xs">
-                Track customer orders
-              </p>
-            </div>
-          </Link>
-
-          {/* Settings Card */}
-          <div className="bg-white rounded-lg shadow p-4 opacity-60 cursor-not-allowed">
-            <div className="text-3xl mb-2 text-center">⚙️</div>
-            <h2 className="text-sm font-semibold text-gray-800 text-center mb-1">
-              Settings
-            </h2>
-            <p className="text-gray-500 text-center text-xs">
-              Coming soon...
+        {/* ================= HEADER ================= */}
+        <header className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-900">
+              Admin Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage products, orders and operations
             </p>
           </div>
-        </div>
+        </header>
 
-        {/* Quick Stats */}
-        <div className="mt-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg shadow p-4 text-white">
-          <h3 className="text-sm font-semibold mb-2">Quick Actions</h3>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/admin/add-product"
-              className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            >
-              + Add Bangles
-            </Link>
-            <Link
-              href="/admin/add-product"
-              className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            >
-              + Add Sarees
-            </Link>
+        {/* ================= STATS ROW ================= */}
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Stat title="Products" value="128" />
+          <Stat title="Orders" value="56" />
+          <Stat title="Pending" value="9" />
+          <Stat title="Revenue" value="₹84,200" highlight />
+        </section>
+
+        {/* ================= PRIMARY ACTION ================= */}
+        <Link
+          href="/admin/add-product"
+          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 px-7 py-6 text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-xl font-semibold">
+              +
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">
+                Add New Product
+              </h2>
+              <p className="text-sm text-white/80">
+                Create and publish products instantly
+              </p>
+            </div>
+          </div>
+          <span className="text-xl text-white/70 transition group-hover:translate-x-1">
+            →
+          </span>
+        </Link>
+
+        {/* ================= MANAGE ================= */}
+        <section>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Manage
+          </p>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <ManageCard
+              href="/admin/products"
+              title="Products"
+              desc="Catalog & inventory"
+            />
+            <ManageCard
+              href="/admin/orders"
+              title="Orders"
+              desc="Fulfillment & tracking"
+            />
+          </div>
+        </section>
+
+        {/* ================= QUICK ACTIONS ================= */}
+        <section className="rounded-2xl border bg-white px-6 py-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Quick Actions
+            </p>
             <Link
               href="/admin/products"
-              className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              className="text-xs font-medium text-gray-600 hover:text-gray-900"
             >
-              View Catalog
+              View catalog →
             </Link>
           </div>
-        </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <QuickBtn label="Add Bangles" />
+            <QuickBtn label="Add Sarees" />
+          </div>
+        </section>
+
       </div>
     </div>
+  );
+}
+
+/* ================= SMALL COMPONENTS ================= */
+
+function Stat({ title, value, highlight }) {
+  return (
+    <div className="rounded-2xl border bg-white px-5 py-4 shadow-sm transition hover:shadow-md">
+      <p className="text-xs font-medium text-gray-500">{title}</p>
+      <p
+        className={`mt-2 text-2xl font-semibold ${
+          highlight ? "text-purple-600" : "text-gray-900"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ManageCard({ href, title, desc }) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center justify-between rounded-2xl border bg-white px-6 py-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900">
+          {title}
+        </h3>
+        <p className="mt-1 text-xs text-gray-500">
+          {desc}
+        </p>
+      </div>
+      <span className="text-lg text-gray-300 transition group-hover:text-gray-500 group-hover:translate-x-1">
+        →
+      </span>
+    </Link>
+  );
+}
+
+function QuickBtn({ label }) {
+  return (
+    <Link
+      href="/admin/add-product"
+      className="rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-200 hover:text-gray-900"
+    >
+      + {label}
+    </Link>
   );
 }
