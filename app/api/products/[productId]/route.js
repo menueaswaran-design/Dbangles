@@ -9,7 +9,7 @@ export async function GET(request, context) {
 	try {
 		let productId = context?.params?.productId;
 		// Fallback: extract productId from URL if not present in params
-		if (!productId) {c
+		if (!productId) {
 			const urlParts = request.url.split("/");
 			// Find the index of 'products' and get the next part
 			const productsIdx = urlParts.findIndex((part) => part === "products");
