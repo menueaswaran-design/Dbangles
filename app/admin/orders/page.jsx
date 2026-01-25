@@ -2,9 +2,7 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
 
-const API_URL = typeof window !== "undefined"
-  ? `${window.location.protocol}//${window.location.hostname}/api/orders`
-  : "https://dbangles.vercel.app/api/orders";
+const API_URL = "https://dbangles.vercel.app/api/orders";
 
 const statusColor = {
   Placed: "bg-yellow-100 text-yellow-700 animate-pulse",
