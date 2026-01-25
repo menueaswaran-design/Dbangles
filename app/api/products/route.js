@@ -54,6 +54,9 @@ export async function POST(request) {
       phoneNumber,
       whatsappNumber,
       deliveryAddress,
+      landmark,
+      city,
+      pincode,
       orderMessage,
       orderedProduct,
     } = body;
@@ -71,6 +74,9 @@ export async function POST(request) {
       phoneNumber,
       whatsappNumber,
       deliveryAddress,
+      landmark,
+      city,
+      pincode,
       orderMessage,
       orderedProduct: {
         _id: orderedProduct._id,

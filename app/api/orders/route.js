@@ -21,11 +21,15 @@ export async function POST(req) {
   };
   try {
     const body = await req.json();
+    console.log("Received order payload:", body);
     const {
       customerName,
       phoneNumber,
       whatsappNumber,
       deliveryAddress,
+      landmark,
+      city,
+      pincode,
       orderMessage,
       orderedProducts, // plural
     } = body;
@@ -48,12 +52,17 @@ export async function POST(req) {
       phoneNumber,
       whatsappNumber,
       deliveryAddress,
+      landmark,
+      city,
+      pincode,
       orderMessage,
       orderedProducts,
       createdAt: serverTimestamp(),
     };
+    console.log("Order to be saved:", newOrder);
 
     const docRef = await addDoc(collection(db, "orders"), newOrder);
+    console.log("Order saved with ID:", docRef.id);
 
     return new Response(
       JSON.stringify({
@@ -64,6 +73,7 @@ export async function POST(req) {
       { status: 200, headers }
     );
   } catch (error) {
+    console.error("Order creation error:", error);
     return new Response(
       JSON.stringify({ success: false, error: "Failed to create order" }),
       { status: 500, headers }
