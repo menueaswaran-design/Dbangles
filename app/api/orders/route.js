@@ -35,12 +35,13 @@ export async function POST(req) {
     } = body;
 
     // Basic validation
-    if (
-      !customerName ||
-      !phoneNumber ||
-      !Array.isArray(orderedProducts) ||
-      orderedProducts.length === 0
-    ) {
+    if (!Array.isArray(orderedProducts) || orderedProducts.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Ordered product is not selected" }),
+        { status: 400, headers }
+      );
+    }
+    if (!customerName || !phoneNumber) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing required fields" }),
         { status: 400, headers }
