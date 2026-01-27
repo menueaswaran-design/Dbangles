@@ -95,12 +95,14 @@ export default function AddProductPage() {
     originalPrice: "",
     discountedPrice: "",
     category: "",
+    size: [],
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [sizeInput, setSizeInput] = useState("");
 
   // Cropping states
   const [showCropper, setShowCropper] = useState(false);
@@ -216,6 +218,7 @@ export default function AddProductPage() {
         category: formData.category,
         image: imageURL,
         productType: productType,
+        size: formData.size,
         createdAt: new Date().toISOString(),
       };
 
@@ -236,7 +239,9 @@ export default function AddProductPage() {
         originalPrice: "",
         discountedPrice: "",
         category: "",
+        size: [],
       });
+      setSizeInput("");
       setImageFile(null);
       setImagePreview(null);
 
@@ -458,6 +463,85 @@ export default function AddProductPage() {
               ))}
             </select>
           </div>
+
+          {/* Sizes (Only for Bangles) */}
+          {productType === "bangles" && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Available Sizes (e.g., 2.2, 2.4, 2.6)
+              </label>
+              <input
+                type="text"
+                placeholder="Enter sizes separated by commas (e.g., 2.2, 2.4, 2.6, 2.8)"
+                value={sizeInput}
+                onChange={(e) => {
+                  setSizeInput(e.target.value);
+                  const sizes = e.target.value
+                    .split(",")
+                    .map(s => s.trim())
+                    .filter(s => s !== "")
+                    .map(s => parseFloat(s))
+                    .filter(s => !isNaN(s));
+                  setFormData((prev) => ({ ...prev, size: sizes }));
+                }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all"
+              />
+              {formData.size.length > 0 && (
+                <div className="mt-2 bg-pink-50 rounded-md p-2">
+                  <p className="text-xs text-gray-600 mb-1.5">Current sizes:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {formData.size.map((s, i) => (
+                      <span 
+                        key={i}
+                        className="bg-pink-500 text-white px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSizes = formData.size.filter((_, idx) => idx !== i);
+                            setFormData((prev) => ({
+                              ...prev,
+                              size: newSizes
+                            }));
+                            setSizeInput(newSizes.join(", "));
+                          }}
+                          className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-2 bg-gray-50 rounded-md p-2">
+                <p className="text-xs text-gray-600 mb-1.5">Quick add common sizes:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[2.0, 2.2, 2.4, 2.6, 2.8, 3.0].map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => {
+                        if (!formData.size.includes(size)) {
+                          const newSizes = [...formData.size, size].sort((a, b) => a - b);
+                          setFormData((prev) => ({ 
+                            ...prev, 
+                            size: newSizes
+                          }));
+                          setSizeInput(newSizes.join(", "));
+                        }
+                      }}
+                      disabled={formData.size.includes(size)}
+                      className="bg-white hover:bg-pink-500 hover:text-white text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Prices */}
           <div className="grid grid-cols-2 gap-3">

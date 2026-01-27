@@ -28,7 +28,7 @@ const [loading, setLoading] = useState(true);
   };
 
 
-  const API_URL = "https://dbangles.vercel.app/api/orders";
+  const API_URL = "/api/orders";
   
 
   
