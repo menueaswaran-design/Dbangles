@@ -500,7 +500,7 @@ export default function AddProductPage() {
             />
           </div>
 
-          {/* Size-Based Pricing (Only for Bangles) */
+          {/* Size-Based Pricing (Only for Bangles) */}
           {productType === "bangles" && (
             <div className="border-2 border-pink-200 rounded-lg p-4 bg-pink-50/30">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
