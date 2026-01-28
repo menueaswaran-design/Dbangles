@@ -13,6 +13,20 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 
+const BANGLE_CATEGORIES = [
+  "Kundan bangles",
+  "Glass bangles",
+  "Bracelets",
+  "Hair accessories",
+  "Saree pins",
+  "Invisible chains",
+];
+
+const DRESS_CATEGORIES = [
+  "Sarees",
+  "Unstitched chudi material",
+];
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +36,8 @@ export default function AdminProductsPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState("");
 
   const [editForm, setEditForm] = useState({
     name: "",
@@ -410,13 +426,67 @@ export default function AdminProductsPage() {
                   <label className="block text-xs font-semibold text-gray-700">
                     Category
                   </label>
-                  <input
-                    name="category"
-                    value={editForm.category}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Gold, Silver"
-                    className="w-full border-2 border-gray-200 focus:border-[#0f766e] px-3 py-2 text-sm rounded-lg outline-none transition-all duration-200"
-                  />
+                  {!showCustomCategory ? (
+                    <div className="flex gap-1">
+                      <select
+                        name="category"
+                        value={editForm.category}
+                        onChange={handleInputChange}
+                        className="flex-1 border-2 border-gray-200 focus:border-[#0f766e] px-2 py-2 text-sm rounded-lg outline-none transition-all duration-200 bg-white"
+                      >
+                        <option value="">Select Category</option>
+                        {(editForm.productType === "bangles" ? BANGLE_CATEGORIES : DRESS_CATEGORIES).map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                        {editForm.category && ![...BANGLE_CATEGORIES, ...DRESS_CATEGORIES].includes(editForm.category) && (
+                          <option value={editForm.category}>{editForm.category}</option>
+                        )}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomCategory(true)}
+                        className="px-2 py-2 bg-[#0f766e] text-white rounded-lg hover:bg-[#0d6259] transition-colors text-xs font-medium"
+                        title="Add new category"
+                      >
+                        <FaPlus size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="New category"
+                        className="flex-1 border-2 border-gray-200 focus:border-[#0f766e] px-2 py-2 text-sm rounded-lg outline-none transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (customCategory.trim()) {
+                            setEditForm((prev) => ({ ...prev, category: customCategory.trim() }));
+                            setShowCustomCategory(false);
+                            setCustomCategory("");
+                          }
+                        }}
+                        className="px-2 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomCategory(false);
+                          setCustomCategory("");
+                        }}
+                        className="px-2 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">

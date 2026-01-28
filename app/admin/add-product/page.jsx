@@ -114,6 +114,8 @@ export default function AddProductPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   const categories = productType === "bangles" ? BANGLE_CATEGORIES : DRESS_CATEGORIES;
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -469,20 +471,67 @@ export default function AddProductPage() {
             <label className="block text-xs font-medium text-gray-700 mb-1">
               Category *
             </label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all bg-white"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            {!showCustomCategory ? (
+              <div className="flex gap-2">
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all bg-white"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomCategory(true)}
+                  className="px-3 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors text-sm font-medium flex items-center gap-1"
+                >
+                  <FaTimes className="rotate-45" size={12} /> Add
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Enter new category name"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customCategory.trim()) {
+                      setFormData((prev) => ({ ...prev, category: customCategory.trim() }));
+                      setShowCustomCategory(false);
+                      setCustomCategory("");
+                    }
+                  }}
+                  className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium"
+                >
+                  ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCustomCategory(false);
+                    setCustomCategory("");
+                  }}
+                  className="px-3 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors text-sm font-medium"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            {formData.category && !categories.includes(formData.category) && (
+              <p className="text-xs text-pink-600 mt-1">Custom category: {formData.category}</p>
+            )}
           </div>
 
           {/* Note */}

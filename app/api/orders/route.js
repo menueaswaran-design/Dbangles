@@ -35,6 +35,8 @@ export async function POST(req) {
       orderedProducts, // plural
       userId, // Add userId
       userEmail, // Add userEmail for easy identification
+      size, // Product size
+      shipping, // Shipping charge (default 70)
     } = body;
 
     // Basic validation
@@ -63,6 +65,8 @@ export async function POST(req) {
       orderedProducts,
       userId, // Add userId to order
       userEmail, // Add userEmail to order
+      size: size || "", // Product size
+      shipping: shipping || 70, // Shipping charge, default 70
       orderStatus: "Placed", // Default status
       createdAt: serverTimestamp(),
     };

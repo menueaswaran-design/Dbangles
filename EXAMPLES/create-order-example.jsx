@@ -8,6 +8,8 @@ export default function CreateOrderExample() {
   const [formData, setFormData] = useState({
     customerName: "",
     phoneNumber: "",
+    size: "", // Product size
+    shipping: 70, // Default shipping charge
     // ... other fields
   });
 

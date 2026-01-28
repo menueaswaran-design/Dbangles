@@ -59,6 +59,8 @@ export async function POST(request) {
       pincode,
       orderMessage,
       orderedProduct,
+      size,
+      shipping,
     } = body;
 
     // Basic validation
@@ -82,6 +84,8 @@ export async function POST(request) {
         _id: orderedProduct._id,
         name: orderedProduct.name,
       },
+      size: size || "",
+      shipping: shipping || 70,
       createdAt: serverTimestamp(),
     };
 
