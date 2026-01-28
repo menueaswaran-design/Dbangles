@@ -22,7 +22,6 @@ export default function AdminProductsPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
-  const [sizeInput, setSizeInput] = useState("");
 
   const [editForm, setEditForm] = useState({
     name: "",
@@ -31,7 +30,7 @@ export default function AdminProductsPage() {
     productType: "",
     originalPrice: "",
     discountedPrice: "",
-    size: [],
+    sizeVariants: [], // Array of {size, originalPrice, discountedPrice}
   });
 
   /* ---------------- FETCH PRODUCTS ---------------- */
@@ -58,7 +57,28 @@ export default function AdminProductsPage() {
   /* ---------------- EDIT ---------------- */
   const handleEditClick = (product) => {
     setEditProduct(product);
-    const sizes = Array.isArray(product.size) ? product.size : [];
+    // Convert old size array to sizeVariants or use existing sizeVariants
+    const defaultSizes = [2.2, 2.4, 2.6, 2.8, 2.10];
+    let sizeVariants = [];
+    
+    if (product.sizeVariants && Array.isArray(product.sizeVariants) && product.sizeVariants.length > 0) {
+      sizeVariants = product.sizeVariants;
+    } else if (product.size && Array.isArray(product.size) && product.size.length > 0) {
+      // Migrate old format to new format
+      sizeVariants = product.size.map(size => ({
+        size,
+        originalPrice: "",
+        discountedPrice: ""
+      }));
+    } else if (product.productType === "bangles") {
+      // Auto-populate default sizes for bangles if no sizes exist
+      sizeVariants = defaultSizes.map(size => ({
+        size,
+        originalPrice: "",
+        discountedPrice: ""
+      }));
+    }
+    
     setEditForm({
       name: product.name || "",
       description: product.description || "",
@@ -66,32 +86,14 @@ export default function AdminProductsPage() {
       productType: product.productType || "",
       originalPrice: product.originalPrice || "",
       discountedPrice: product.discountedPrice || "",
-      size: sizes,
+      sizeVariants: sizeVariants,
     });
-    setSizeInput(sizes.join(", "));
     setEditModalOpen(true);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSizeChange = (e, index) => {
-    const updated = [...editForm.size];
-    updated[index] = Number(e.target.value);
-    setEditForm((prev) => ({ ...prev, size: updated }));
-  };
-
-  const addSize = () => {
-    setEditForm((prev) => ({ ...prev, size: [...prev.size, 0] }));
-  };
-
-  const removeSize = (index) => {
-    setEditForm((prev) => ({
-      ...prev,
-      size: prev.size.filter((_, i) => i !== index),
-    }));
   };
 
   /* ---------------- SAVE EDIT (FIXED) ---------------- */
@@ -106,16 +108,22 @@ export default function AdminProductsPage() {
     setEditLoading(true);
 
     try {
-      await updateDoc(doc(db, "products", editProduct.id), {
+      const updateData = {
         ...editForm,
         originalPrice: Number(editForm.originalPrice),
         discountedPrice: Number(editForm.discountedPrice),
-        size: editForm.size.map(Number),
-      });
+        sizeVariants: editForm.sizeVariants.map(sv => ({
+          size: Number(sv.size),
+          originalPrice: sv.originalPrice ? Number(sv.originalPrice) : Number(editForm.originalPrice),
+          discountedPrice: sv.discountedPrice ? Number(sv.discountedPrice) : Number(editForm.discountedPrice)
+        }))
+      };
+      
+      await updateDoc(doc(db, "products", editProduct.id), updateData);
 
       setProducts((prev) =>
         prev.map((p) =>
-          p.id === editProduct.id ? { ...p, ...editForm } : p
+          p.id === editProduct.id ? { ...p, ...updateData } : p
         )
       );
 
@@ -268,17 +276,28 @@ export default function AdminProductsPage() {
                 </p>
 
                 {/* Sizes */}
-                {product.size && product.size.length > 0 && (
+                {((product.sizeVariants && product.sizeVariants.length > 0) || (product.size && product.size.length > 0)) && (
                   <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                     <FaRuler className="text-gray-400" size={10} />
-                    {product.size.map((size, idx) => (
-                      <span 
-                        key={idx}
-                        className="text-xs bg-teal-50 text-[#0f766e] px-1.5 py-0.5 rounded font-medium"
-                      >
-                        {size}
-                      </span>
-                    ))}
+                    {product.sizeVariants && product.sizeVariants.length > 0 ? (
+                      product.sizeVariants.map((sv, idx) => (
+                        <span 
+                          key={idx}
+                          className="text-xs bg-teal-50 text-[#0f766e] px-1.5 py-0.5 rounded font-medium"
+                        >
+                          {sv.size}
+                        </span>
+                      ))
+                    ) : (
+                      product.size.map((size, idx) => (
+                        <span 
+                          key={idx}
+                          className="text-xs bg-teal-50 text-[#0f766e] px-1.5 py-0.5 rounded font-medium"
+                        >
+                          {size}
+                        </span>
+                      ))
+                    )}
                   </div>
                 )}
 
@@ -453,82 +472,70 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Sizes Section */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-700">
-                  <FaRuler className="inline mr-1" size={10} />
-                  Available Sizes (e.g., 2.2, 2.4, 2.6)
-                </label>
-                
-                <div className="space-y-2">
-                  {/* Size Input Field */}
-                  <input
-                    type="text"
-                    placeholder="Enter sizes separated by commas (e.g., 2.2, 2.4, 2.6, 2.8)"
-                    value={sizeInput}
-                    onChange={(e) => {
-                      setSizeInput(e.target.value);
-                      const sizes = e.target.value
-                        .split(",")
-                        .map(s => s.trim())
-                        .filter(s => s !== "")
-                        .map(s => parseFloat(s))
-                        .filter(s => !isNaN(s));
-                      setEditForm((prev) => ({ ...prev, size: sizes }));
-                    }}
-                    className="w-full border-2 border-gray-200 focus:border-[#0f766e] px-3 py-2 text-sm rounded-lg outline-none transition-all duration-200"
-                  />
+              {/* Size-Based Pricing Section (Only for Bangles) */}
+              {editForm.productType === "bangles" && (
+                <div className="border-2 border-teal-200 rounded-lg p-3 bg-teal-50/30 space-y-2">
+                  <label className="block text-sm font-bold text-gray-800">
+                    <FaRuler className="inline mr-2" />
+                    Size-Based Pricing (Sizes: 2.2, 2.4, 2.6, 2.8, 2.10)
+                  </label>
                   
-                  {/* Display Current Sizes */}
-                  {editForm.size.length > 0 && (
-                    <div className="bg-teal-50 rounded-lg p-2">
-                      <p className="text-xs text-gray-600 mb-1.5">Current sizes:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {editForm.size.map((s, i) => (
-                          <span 
-                            key={i}
-                            className="bg-[#0f766e] text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
-                          >
-                            {s}
-                            <button
-                              type="button"
-                              onClick={() => removeSize(i)}
-                              className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                            >
-                              <FaTimes size={8} />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-600">
+                    💡 Leave price empty to use base price (₹{editForm.originalPrice || '...'} / ₹{editForm.discountedPrice || '...'})
+                  </p>
 
-                  {/* Quick Add Common Sizes */}
-                  <div className="bg-gray-50 rounded-lg p-2">
-                    <p className="text-xs text-gray-600 mb-1.5">Quick add common bangle sizes:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[2.0, 2.2, 2.4, 2.6, 2.8, 3.0].map((size) => (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => {
-                            if (!editForm.size.includes(size)) {
-                              setEditForm((prev) => ({ 
-                                ...prev, 
-                                size: [...prev.size, size].sort((a, b) => a - b)
-                              }));
-                            }
-                          }}
-                          disabled={editForm.size.includes(size)}
-                          className="bg-white hover:bg-[#0f766e] hover:text-white text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {editForm.sizeVariants.map((variant, index) => (
+                      <div key={index} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="bg-[#0f766e] text-white px-3 py-1 rounded text-sm font-bold min-w-[70px] text-center">
+                            Size {variant.size}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Original Price (₹)
+                            </label>
+                            <input
+                              type="number"
+                              placeholder={editForm.originalPrice || "Base price"}
+                              value={variant.originalPrice}
+                              onChange={(e) => {
+                                const updated = [...editForm.sizeVariants];
+                                updated[index].originalPrice = e.target.value;
+                                setEditForm((prev) => ({ ...prev, sizeVariants: updated }));
+                              }}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f766e] focus:border-transparent outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Discounted Price (₹)
+                            </label>
+                            <input
+                              type="number"
+                              placeholder={editForm.discountedPrice || "Base price"}
+                              value={variant.discountedPrice}
+                              onChange={(e) => {
+                                const updated = [...editForm.sizeVariants];
+                                updated[index].discountedPrice = e.target.value;
+                                setEditForm((prev) => ({ ...prev, sizeVariants: updated }));
+                              }}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f766e] focus:border-transparent outline-none"
+                            />
+                          </div>
+                        </div>
+                        {variant.originalPrice && variant.discountedPrice && (
+                          <div className="mt-2 text-xs text-green-600 font-medium text-center">
+                            {Math.round(((variant.originalPrice - variant.discountedPrice) / variant.originalPrice) * 100)}% OFF
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-3">

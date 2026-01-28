@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { storage, db } from "@/lib/firebase";
 import Cropper from "react-easy-crop";
+import { FaRuler, FaTimes } from "react-icons/fa";
 
 const BANGLE_CATEGORIES = [
   "Kundan bangles",
@@ -89,20 +90,20 @@ const compressImage = (file, maxWidth = 800, quality = 0.7) => {
 
 export default function AddProductPage() {
   const [productType, setProductType] = useState("bangles");
+  const defaultSizes = [2.2, 2.4, 2.6, 2.8, 2.10];
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     originalPrice: "",
     discountedPrice: "",
     category: "",
-    size: [],
+    sizeVariants: defaultSizes.map(size => ({ size, originalPrice: "", discountedPrice: "" })), // Default sizes for bangles
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [sizeInput, setSizeInput] = useState("");
 
   // Cropping states
   const [showCropper, setShowCropper] = useState(false);
@@ -218,7 +219,11 @@ export default function AddProductPage() {
         category: formData.category,
         image: imageURL,
         productType: productType,
-        size: formData.size,
+        sizeVariants: formData.sizeVariants.map(sv => ({
+          size: Number(sv.size),
+          originalPrice: sv.originalPrice ? Number(sv.originalPrice) : Number(formData.originalPrice),
+          discountedPrice: sv.discountedPrice ? Number(sv.discountedPrice) : Number(formData.discountedPrice)
+        })),
         createdAt: new Date().toISOString(),
       };
 
@@ -239,9 +244,8 @@ export default function AddProductPage() {
         originalPrice: "",
         discountedPrice: "",
         category: "",
-        size: [],
+        sizeVariants: [],
       });
-      setSizeInput("");
       setImageFile(null);
       setImagePreview(null);
 
@@ -338,7 +342,17 @@ export default function AddProductPage() {
                 type="button"
                 onClick={() => {
                   setProductType("bangles");
-                  setFormData((prev) => ({ ...prev, category: "" }));
+                  // Auto-populate default sizes for bangles
+                  const defaultSizes = [2.2, 2.4, 2.6, 2.8, 2.10];
+                  setFormData((prev) => ({ 
+                    ...prev, 
+                    category: "",
+                    sizeVariants: defaultSizes.map(size => ({
+                      size,
+                      originalPrice: "",
+                      discountedPrice: ""
+                    }))
+                  }));
                 }}
                 className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
                   productType === "bangles"
@@ -352,7 +366,11 @@ export default function AddProductPage() {
                 type="button"
                 onClick={() => {
                   setProductType("dresses");
-                  setFormData((prev) => ({ ...prev, category: "" }));
+                  setFormData((prev) => ({ 
+                    ...prev, 
+                    category: "",
+                    sizeVariants: []
+                  }));
                 }}
                 className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
                   productType === "dresses"
@@ -464,81 +482,67 @@ export default function AddProductPage() {
             </select>
           </div>
 
-          {/* Sizes (Only for Bangles) */}
+          {/* Size-Based Pricing (Only for Bangles) */}
           {productType === "bangles" && (
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Available Sizes (e.g., 2.2, 2.4, 2.6)
+            <div className="border-2 border-pink-200 rounded-lg p-4 bg-pink-50/30">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                <FaRuler className="inline mr-2" />
+                Size-Based Pricing (Sizes: 2.2, 2.4, 2.6, 2.8, 2.10)
               </label>
-              <input
-                type="text"
-                placeholder="Enter sizes separated by commas (e.g., 2.2, 2.4, 2.6, 2.8)"
-                value={sizeInput}
-                onChange={(e) => {
-                  setSizeInput(e.target.value);
-                  const sizes = e.target.value
-                    .split(",")
-                    .map(s => s.trim())
-                    .filter(s => s !== "")
-                    .map(s => parseFloat(s))
-                    .filter(s => !isNaN(s));
-                  setFormData((prev) => ({ ...prev, size: sizes }));
-                }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all"
-              />
-              {formData.size.length > 0 && (
-                <div className="mt-2 bg-pink-50 rounded-md p-2">
-                  <p className="text-xs text-gray-600 mb-1.5">Current sizes:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {formData.size.map((s, i) => (
-                      <span 
-                        key={i}
-                        className="bg-pink-500 text-white px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1"
-                      >
-                        {s}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newSizes = formData.size.filter((_, idx) => idx !== i);
-                            setFormData((prev) => ({
-                              ...prev,
-                              size: newSizes
-                            }));
-                            setSizeInput(newSizes.join(", "));
-                          }}
-                          className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                        >
-                          ✕
-                        </button>
+              
+              <p className="text-xs text-gray-600 mb-3">
+                💡 Leave price empty to use base price (₹{formData.originalPrice || '...'} / ₹{formData.discountedPrice || '...'})
+              </p>
+
+              <div className="space-y-2">
+                {formData.sizeVariants.map((variant, index) => (
+                  <div key={index} className="bg-white rounded-md p-3 shadow-sm border border-gray-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-pink-500 text-white px-3 py-1 rounded text-sm font-bold min-w-[70px] text-center">
+                        Size {variant.size}
                       </span>
-                    ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Original Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          placeholder={formData.originalPrice || "Base price"}
+                          value={variant.originalPrice}
+                          onChange={(e) => {
+                            const updated = [...formData.sizeVariants];
+                            updated[index].originalPrice = e.target.value;
+                            setFormData((prev) => ({ ...prev, sizeVariants: updated }));
+                          }}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Discounted Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          placeholder={formData.discountedPrice || "Base price"}
+                          value={variant.discountedPrice}
+                          onChange={(e) => {
+                            const updated = [...formData.sizeVariants];
+                            updated[index].discountedPrice = e.target.value;
+                            setFormData((prev) => ({ ...prev, sizeVariants: updated }));
+                          }}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
+                    {variant.originalPrice && variant.discountedPrice && (
+                      <div className="mt-2 text-xs text-green-600 font-medium text-center">
+                        {Math.round(((variant.originalPrice - variant.discountedPrice) / variant.originalPrice) * 100)}% OFF
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-              <div className="mt-2 bg-gray-50 rounded-md p-2">
-                <p className="text-xs text-gray-600 mb-1.5">Quick add common sizes:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {[2.0, 2.2, 2.4, 2.6, 2.8, 3.0].map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => {
-                        if (!formData.size.includes(size)) {
-                          const newSizes = [...formData.size, size].sort((a, b) => a - b);
-                          setFormData((prev) => ({ 
-                            ...prev, 
-                            size: newSizes
-                          }));
-                          setSizeInput(newSizes.join(", "));
-                        }
-                      }}
-                      disabled={formData.size.includes(size)}
-                      className="bg-white hover:bg-pink-500 hover:text-white text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
           )}
