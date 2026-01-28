@@ -30,6 +30,7 @@ export default function AdminProductsPage() {
     productType: "",
     originalPrice: "",
     discountedPrice: "",
+    note: "",
     sizeVariants: [], // Array of {size, originalPrice, discountedPrice}
   });
 
@@ -86,6 +87,7 @@ export default function AdminProductsPage() {
       productType: product.productType || "",
       originalPrice: product.originalPrice || "",
       discountedPrice: product.discountedPrice || "",
+      note: product.note || "",
       sizeVariants: sizeVariants,
     });
     setEditModalOpen(true);
@@ -433,6 +435,21 @@ export default function AdminProductsPage() {
                     <option value="dresses">👗 Dresses</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Note */}
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-gray-700">
+                  Note (Optional)
+                </label>
+                <textarea
+                  name="note"
+                  value={editForm.note}
+                  onChange={handleInputChange}
+                  placeholder="Add any special notes or instructions..."
+                  rows={2}
+                  className="w-full border-2 border-gray-200 focus:border-[#0f766e] px-3 py-2 text-sm rounded-lg outline-none transition-all duration-200 resize-none"
+                />
               </div>
 
               {/* Price Row */}

@@ -97,6 +97,7 @@ export default function AddProductPage() {
     originalPrice: "",
     discountedPrice: "",
     category: "",
+    note: "",
     sizeVariants: defaultSizes.map(size => ({ size, originalPrice: "", discountedPrice: "" })), // Default sizes for bangles
   });
   const [imageFile, setImageFile] = useState(null);
@@ -217,6 +218,7 @@ export default function AddProductPage() {
         originalPrice: Number(formData.originalPrice),
         discountedPrice: Number(formData.discountedPrice),
         category: formData.category,
+        note: formData.note || "",
         image: imageURL,
         productType: productType,
         sizeVariants: formData.sizeVariants.map(sv => ({
@@ -244,6 +246,7 @@ export default function AddProductPage() {
         originalPrice: "",
         discountedPrice: "",
         category: "",
+        note: "",
         sizeVariants: [],
       });
       setImageFile(null);
@@ -482,7 +485,22 @@ export default function AddProductPage() {
             </select>
           </div>
 
-          {/* Size-Based Pricing (Only for Bangles) */}
+          {/* Note */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Note (Optional)
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              rows={2}
+              placeholder="Add any special notes or instructions..."
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all resize-none"
+            />
+          </div>
+
+          {/* Size-Based Pricing (Only for Bangles) */
           {productType === "bangles" && (
             <div className="border-2 border-pink-200 rounded-lg p-4 bg-pink-50/30">
               <label className="block text-sm font-semibold text-gray-800 mb-2">

@@ -1,16 +1,68 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
   PlusCircle,
   ShoppingCart,
+  LogOut,
 } from "lucide-react";
+import { onAuthChange, logOut, isAdmin } from "@/lib/auth";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check admin authentication
+  useEffect(() => {
+    const unsubscribe = onAuthChange((currentUser) => {
+      if (!currentUser || !isAdmin(currentUser)) {
+        // Not logged in or not admin - redirect to login
+        if (pathname !== "/admin/login") {
+          router.push("/admin/login");
+        }
+      } else {
+        setUser(currentUser);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router, pathname]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logOut();
+    router.push("/admin/login");
+  };
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // Don't show admin layout on login page or if user is not authenticated
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // If not authenticated, show loading while redirecting (don't show admin UI)
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   const navItems = [
     {
@@ -78,8 +130,17 @@ export default function AdminLayout({ children }) {
           </h2>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Admin</span>
-            <div className="w-8 h-8 rounded-full bg-gray-300" />
+            <span className="text-sm text-gray-600">
+              {user?.email || "Admin"}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition"
+              title="Logout"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
           </div>
         </header>
 
