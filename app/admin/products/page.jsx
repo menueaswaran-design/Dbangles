@@ -9,23 +9,10 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  setDoc,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
-
-const BANGLE_CATEGORIES = [
-  "Kundan bangles",
-  "Glass bangles",
-  "Bracelets",
-  "Hair accessories",
-  "Saree pins",
-  "Invisible chains",
-];
-
-const DRESS_CATEGORIES = [
-  "Sarees",
-  "Unstitched chudi material",
-];
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -39,6 +26,11 @@ export default function AdminProductsPage() {
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
 
+  // Dynamic categories from Firestore
+  const [bangleCategories, setBangleCategories] = useState([]);
+  const [dressCategories, setDressCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
@@ -50,10 +42,75 @@ export default function AdminProductsPage() {
     sizeVariants: [], // Array of {size, originalPrice, discountedPrice}
   });
 
-  /* ---------------- FETCH PRODUCTS ---------------- */
+  /* ---------------- FETCH PRODUCTS AND CATEGORIES ---------------- */
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const categoriesSnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = categoriesSnapshot.docs.map(doc => doc.data());
+      
+      const bangles = categoriesData
+        .filter(cat => cat.productType === "bangles")
+        .map(cat => cat.name)
+        .sort();
+      
+      const dresses = categoriesData
+        .filter(cat => cat.productType === "dresses")
+        .map(cat => cat.name)
+        .sort();
+      
+      // If no categories exist, add default ones
+      if (bangles.length === 0) {
+        const defaultBangles = [
+          "Kundan bangles",
+          "Glass bangles",
+          "Bracelets",
+          "Hair accessories",
+          "Saree pins",
+          "Invisible chains",
+        ];
+        for (const cat of defaultBangles) {
+          await saveCategory(cat, "bangles");
+        }
+        setBangleCategories(defaultBangles);
+      } else {
+        setBangleCategories(bangles);
+      }
+      
+      if (dresses.length === 0) {
+        const defaultDresses = ["Sarees", "Unstitched chudi material"];
+        for (const cat of defaultDresses) {
+          await saveCategory(cat, "dresses");
+        }
+        setDressCategories(defaultDresses);
+      } else {
+        setDressCategories(dresses);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setBangleCategories([]);
+      setDressCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const saveCategory = async (categoryName, type) => {
+    try {
+      const categoryId = `${type}_${categoryName.toLowerCase().replace(/\s+/g, "_")}`;
+      await setDoc(doc(db, "categories", categoryId), {
+        name: categoryName,
+        productType: type,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error saving category:", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -432,15 +489,16 @@ export default function AdminProductsPage() {
                         name="category"
                         value={editForm.category}
                         onChange={handleInputChange}
-                        className="flex-1 border-2 border-gray-200 focus:border-[#0f766e] px-2 py-2 text-sm rounded-lg outline-none transition-all duration-200 bg-white"
+                        disabled={categoriesLoading}
+                        className="flex-1 border-2 border-gray-200 focus:border-[#0f766e] px-2 py-2 text-sm rounded-lg outline-none transition-all duration-200 bg-white disabled:bg-gray-100"
                       >
-                        <option value="">Select Category</option>
-                        {(editForm.productType === "bangles" ? BANGLE_CATEGORIES : DRESS_CATEGORIES).map((cat) => (
+                        <option value="">{categoriesLoading ? "Loading..." : "Select Category"}</option>
+                        {(editForm.productType === "bangles" ? bangleCategories : dressCategories).map((cat) => (
                           <option key={cat} value={cat}>
                             {cat}
                           </option>
                         ))}
-                        {editForm.category && ![...BANGLE_CATEGORIES, ...DRESS_CATEGORIES].includes(editForm.category) && (
+                        {editForm.category && ![...bangleCategories, ...dressCategories].includes(editForm.category) && (
                           <option value={editForm.category}>{editForm.category}</option>
                         )}
                       </select>
@@ -464,9 +522,19 @@ export default function AdminProductsPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (customCategory.trim()) {
-                            setEditForm((prev) => ({ ...prev, category: customCategory.trim() }));
+                            const newCat = customCategory.trim();
+                            // Save to Firestore
+                            await saveCategory(newCat, editForm.productType);
+                            // Update local state
+                            if (editForm.productType === "bangles") {
+                              setBangleCategories(prev => [...prev, newCat].sort());
+                            } else {
+                              setDressCategories(prev => [...prev, newCat].sort());
+                            }
+                            // Set as selected category
+                            setEditForm((prev) => ({ ...prev, category: newCat }));
                             setShowCustomCategory(false);
                             setCustomCategory("");
                           }

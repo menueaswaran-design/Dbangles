@@ -1,25 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, setDoc } from "firebase/firestore";
 import { storage, db } from "@/lib/firebase";
 import Cropper from "react-easy-crop";
 import { FaRuler, FaTimes } from "react-icons/fa";
-
-const BANGLE_CATEGORIES = [
-  "Kundan bangles",
-  "Glass bangles",
-  "Bracelets",
-  "Hair accessories",
-  "Saree pins",
-  "Invisible chains",
-];
-
-const DRESS_CATEGORIES = [
-  "Sarees",
-  "Unstitched chudi material",
-];
 
 // Create cropped image from canvas
 const getCroppedImg = async (imageSrc, pixelCrop) => {
@@ -113,9 +99,83 @@ export default function AddProductPage() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const categories = productType === "bangles" ? BANGLE_CATEGORIES : DRESS_CATEGORIES;
+  // Dynamic categories from Firestore
+  const [bangleCategories, setBangleCategories] = useState([]);
+  const [dressCategories, setDressCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const categories = productType === "bangles" ? bangleCategories : dressCategories;
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
+
+  // Fetch categories from Firestore
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const categoriesSnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = categoriesSnapshot.docs.map(doc => doc.data());
+      
+      const bangles = categoriesData
+        .filter(cat => cat.productType === "bangles")
+        .map(cat => cat.name)
+        .sort();
+      
+      const dresses = categoriesData
+        .filter(cat => cat.productType === "dresses")
+        .map(cat => cat.name)
+        .sort();
+      
+      // If no categories exist, add default ones
+      if (bangles.length === 0) {
+        const defaultBangles = [
+          "Kundan bangles",
+          "Glass bangles",
+          "Bracelets",
+          "Hair accessories",
+          "Saree pins",
+          "Invisible chains",
+        ];
+        for (const cat of defaultBangles) {
+          await saveCategory(cat, "bangles");
+        }
+        setBangleCategories(defaultBangles);
+      } else {
+        setBangleCategories(bangles);
+      }
+      
+      if (dresses.length === 0) {
+        const defaultDresses = ["Sarees", "Unstitched chudi material"];
+        for (const cat of defaultDresses) {
+          await saveCategory(cat, "dresses");
+        }
+        setDressCategories(defaultDresses);
+      } else {
+        setDressCategories(dresses);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      // Fallback to empty arrays
+      setBangleCategories([]);
+      setDressCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const saveCategory = async (categoryName, type) => {
+    try {
+      const categoryId = `${type}_${categoryName.toLowerCase().replace(/\s+/g, "_")}`;
+      await setDoc(doc(db, "categories", categoryId), {
+        name: categoryName,
+        productType: type,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error saving category:", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -478,9 +538,10 @@ export default function AddProductPage() {
                   value={formData.category}
                   onChange={handleInputChange}
                   required
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all bg-white"
+                  disabled={categoriesLoading}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all bg-white disabled:bg-gray-100"
                 >
-                  <option value="">Select a category</option>
+                  <option value="">{categoriesLoading ? "Loading categories..." : "Select a category"}</option>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
@@ -506,11 +567,23 @@ export default function AddProductPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (customCategory.trim()) {
-                      setFormData((prev) => ({ ...prev, category: customCategory.trim() }));
+                      const newCat = customCategory.trim();
+                      // Save to Firestore
+                      await saveCategory(newCat, productType);
+                      // Update local state
+                      if (productType === "bangles") {
+                        setBangleCategories(prev => [...prev, newCat].sort());
+                      } else {
+                        setDressCategories(prev => [...prev, newCat].sort());
+                      }
+                      // Set as selected category
+                      setFormData((prev) => ({ ...prev, category: newCat }));
                       setShowCustomCategory(false);
                       setCustomCategory("");
+                      setMessage({ type: "success", text: `Category "${newCat}" added successfully!` });
+                      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
                     }
                   }}
                   className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium"
