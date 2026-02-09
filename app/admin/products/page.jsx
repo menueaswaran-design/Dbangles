@@ -39,6 +39,7 @@ export default function AdminProductsPage() {
     originalPrice: "",
     discountedPrice: "",
     note: "",
+    label: "", // Product label: sold-out, best-selling, recommended, or empty
     sizeVariants: [], // Array of {size, originalPrice, discountedPrice}
   });
 
@@ -161,6 +162,7 @@ export default function AdminProductsPage() {
       originalPrice: product.originalPrice || "",
       discountedPrice: product.discountedPrice || "",
       note: product.note || "",
+      label: product.label || "",
       sizeVariants: sizeVariants,
     });
     setEditModalOpen(true);
@@ -187,6 +189,7 @@ export default function AdminProductsPage() {
         ...editForm,
         originalPrice: Number(editForm.originalPrice),
         discountedPrice: Number(editForm.discountedPrice),
+        label: editForm.label || "",
         sizeVariants: editForm.sizeVariants.map(sv => ({
           size: Number(sv.size),
           originalPrice: sv.originalPrice ? Number(sv.originalPrice) : Number(editForm.originalPrice),
@@ -588,6 +591,69 @@ export default function AdminProductsPage() {
                   rows={2}
                   className="w-full border-2 border-gray-200 focus:border-[#0f766e] px-3 py-2 text-sm rounded-lg outline-none transition-all duration-200 resize-none"
                 />
+              </div>
+
+              {/* Product Label */}
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-gray-700">
+                  <FaTag className="inline mr-1" size={10} />
+                  Product Label (Optional)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((prev) => ({ ...prev, label: "" }))}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      editForm.label === ""
+                        ? "bg-gray-700 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    No Label
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((prev) => ({ ...prev, label: "sold-out" }))}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      editForm.label === "sold-out"
+                        ? "bg-red-600 text-white shadow-md"
+                        : "bg-red-100 text-red-700 hover:bg-red-200"
+                    }`}
+                  >
+                    🔴 Sold Out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((prev) => ({ ...prev, label: "best-selling" }))}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      editForm.label === "best-selling"
+                        ? "bg-green-600 text-white shadow-md"
+                        : "bg-green-100 text-green-700 hover:bg-green-200"
+                    }`}
+                  >
+                    ⭐ Best Selling
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((prev) => ({ ...prev, label: "recommended" }))}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      editForm.label === "recommended"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    }`}
+                  >
+                    💎 Recommended
+                  </button>
+                </div>
+                {editForm.label && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selected: <span className="font-semibold">
+                      {editForm.label === "sold-out" && "🔴 Sold Out"}
+                      {editForm.label === "best-selling" && "⭐ Best Selling"}
+                      {editForm.label === "recommended" && "💎 Recommended"}
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Price Row */}
