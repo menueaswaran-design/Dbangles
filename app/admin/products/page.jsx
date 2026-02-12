@@ -190,11 +190,13 @@ export default function AdminProductsPage() {
         originalPrice: Number(editForm.originalPrice),
         discountedPrice: Number(editForm.discountedPrice),
         label: editForm.label || "",
-        sizeVariants: editForm.sizeVariants.map(sv => ({
-          size: Number(sv.size),
-          originalPrice: sv.originalPrice ? Number(sv.originalPrice) : Number(editForm.originalPrice),
-          discountedPrice: sv.discountedPrice ? Number(sv.discountedPrice) : Number(editForm.discountedPrice)
-        }))
+        sizeVariants: editForm.sizeVariants
+          .filter(sv => sv.originalPrice && sv.discountedPrice)
+          .map(sv => ({
+            size: Number(sv.size),
+            originalPrice: Number(sv.originalPrice),
+            discountedPrice: Number(sv.discountedPrice)
+          }))
       };
       
       await updateDoc(doc(db, "products", editProduct.id), updateData);
@@ -698,20 +700,57 @@ export default function AdminProductsPage() {
                 <div className="border-2 border-teal-200 rounded-lg p-3 bg-teal-50/30 space-y-2">
                   <label className="block text-sm font-bold text-gray-800">
                     <FaRuler className="inline mr-2" />
-                    Size-Based Pricing (Sizes: 2.2, 2.4, 2.6, 2.8, 2.10)
+                    Size-Based Pricing
                   </label>
                   
                   <p className="text-xs text-gray-600">
-                    💡 Leave price empty to use base price (₹{editForm.originalPrice || '...'} / ₹{editForm.discountedPrice || '...'})
+                    Add price for each size. Sizes without price will not be shown to customers.
                   </p>
+
+                  {editForm.originalPrice && editForm.discountedPrice && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditForm((prev) => ({
+                          ...prev,
+                          sizeVariants: prev.sizeVariants.map(sv => ({
+                            ...sv,
+                            originalPrice: sv.originalPrice || prev.originalPrice,
+                            discountedPrice: sv.discountedPrice || prev.discountedPrice,
+                          }))
+                        }));
+                      }}
+                      className="w-full py-1.5 text-xs font-medium text-white bg-[#0f766e] rounded-lg hover:bg-[#0d6259] transition-colors"
+                    >
+                      Apply base price (₹{editForm.originalPrice} / ₹{editForm.discountedPrice}) to empty sizes
+                    </button>
+                  )}
 
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {editForm.sizeVariants.map((variant, index) => (
                       <div key={index} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="bg-[#0f766e] text-white px-3 py-1 rounded text-sm font-bold min-w-[70px] text-center">
-                            Size {variant.size}
-                          </span>
+                          <input
+                            type="text"
+                            value={variant.size}
+                            onChange={(e) => {
+                              const updated = [...editForm.sizeVariants];
+                              updated[index].size = e.target.value;
+                              setEditForm((prev) => ({ ...prev, sizeVariants: updated }));
+                            }}
+                            className="bg-[#0f766e] text-white px-3 py-1 rounded text-sm font-bold w-20 text-center outline-none focus:ring-2 focus:ring-teal-300 placeholder-teal-200"
+                            placeholder="Size"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = editForm.sizeVariants.filter((_, i) => i !== index);
+                              setEditForm((prev) => ({ ...prev, sizeVariants: updated }));
+                            }}
+                            className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium"
+                          >
+                            Remove
+                          </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
@@ -720,7 +759,7 @@ export default function AdminProductsPage() {
                             </label>
                             <input
                               type="number"
-                              placeholder={editForm.originalPrice || "Base price"}
+                              placeholder="Enter price"
                               value={variant.originalPrice}
                               onChange={(e) => {
                                 const updated = [...editForm.sizeVariants];
@@ -736,7 +775,7 @@ export default function AdminProductsPage() {
                             </label>
                             <input
                               type="number"
-                              placeholder={editForm.discountedPrice || "Base price"}
+                              placeholder="Enter price"
                               value={variant.discountedPrice}
                               onChange={(e) => {
                                 const updated = [...editForm.sizeVariants];
@@ -752,9 +791,27 @@ export default function AdminProductsPage() {
                             {Math.round(((variant.originalPrice - variant.discountedPrice) / variant.originalPrice) * 100)}% OFF
                           </div>
                         )}
+                        {(!variant.originalPrice || !variant.discountedPrice) && (
+                          <div className="mt-2 text-xs text-orange-500 font-medium text-center">
+                            ⚠ Add both prices or this size won't be shown
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditForm((prev) => ({
+                        ...prev,
+                        sizeVariants: [...prev.sizeVariants, { size: "", originalPrice: "", discountedPrice: "" }]
+                      }));
+                    }}
+                    className="w-full py-2 text-sm font-medium text-[#0f766e] bg-white border-2 border-dashed border-teal-300 rounded-lg hover:bg-teal-50 transition-colors"
+                  >
+                    + Add Size
+                  </button>
                 </div>
               )}
 

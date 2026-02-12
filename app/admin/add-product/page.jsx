@@ -283,11 +283,13 @@ export default function AddProductPage() {
         note: formData.note || "",
         image: imageURL,
         productType: productType,
-        sizeVariants: formData.sizeVariants.map(sv => ({
-          size: Number(sv.size),
-          originalPrice: sv.originalPrice ? Number(sv.originalPrice) : Number(formData.originalPrice),
-          discountedPrice: sv.discountedPrice ? Number(sv.discountedPrice) : Number(formData.discountedPrice)
-        })),
+        sizeVariants: formData.sizeVariants
+          .filter(sv => sv.originalPrice && sv.discountedPrice)
+          .map(sv => ({
+            size: Number(sv.size),
+            originalPrice: Number(sv.originalPrice),
+            discountedPrice: Number(sv.discountedPrice)
+          })),
         createdAt: new Date().toISOString(),
       };
 
@@ -627,20 +629,57 @@ export default function AddProductPage() {
             <div className="border-2 border-pink-200 rounded-lg p-4 bg-pink-50/30">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 <FaRuler className="inline mr-2" />
-                Size-Based Pricing (Sizes: 2.2, 2.4, 2.6, 2.8, 2.10)
+                Size-Based Pricing
               </label>
               
-              <p className="text-xs text-gray-600 mb-3">
-                💡 Leave price empty to use base price (₹{formData.originalPrice || '...'} / ₹{formData.discountedPrice || '...'})
+              <p className="text-xs text-gray-600 mb-2">
+                Add price for each size. Sizes without price will not be shown to customers.
               </p>
+
+              {formData.originalPrice && formData.discountedPrice && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      sizeVariants: prev.sizeVariants.map(sv => ({
+                        ...sv,
+                        originalPrice: sv.originalPrice || prev.originalPrice,
+                        discountedPrice: sv.discountedPrice || prev.discountedPrice,
+                      }))
+                    }));
+                  }}
+                  className="mb-3 w-full py-1.5 text-xs font-medium text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition-colors"
+                >
+                  Apply base price (₹{formData.originalPrice} / ₹{formData.discountedPrice}) to empty sizes
+                </button>
+              )}
 
               <div className="space-y-2">
                 {formData.sizeVariants.map((variant, index) => (
                   <div key={index} className="bg-white rounded-md p-3 shadow-sm border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-pink-500 text-white px-3 py-1 rounded text-sm font-bold min-w-[70px] text-center">
-                        Size {variant.size}
-                      </span>
+                      <input
+                        type="text"
+                        value={variant.size}
+                        onChange={(e) => {
+                          const updated = [...formData.sizeVariants];
+                          updated[index].size = e.target.value;
+                          setFormData((prev) => ({ ...prev, sizeVariants: updated }));
+                        }}
+                        className="bg-pink-500 text-white px-3 py-1 rounded text-sm font-bold w-20 text-center outline-none focus:ring-2 focus:ring-pink-300 placeholder-pink-200"
+                        placeholder="Size"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = formData.sizeVariants.filter((_, i) => i !== index);
+                          setFormData((prev) => ({ ...prev, sizeVariants: updated }));
+                        }}
+                        className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium"
+                      >
+                        Remove
+                      </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -649,7 +688,7 @@ export default function AddProductPage() {
                         </label>
                         <input
                           type="number"
-                          placeholder={formData.originalPrice || "Base price"}
+                          placeholder="Enter price"
                           value={variant.originalPrice}
                           onChange={(e) => {
                             const updated = [...formData.sizeVariants];
@@ -665,7 +704,7 @@ export default function AddProductPage() {
                         </label>
                         <input
                           type="number"
-                          placeholder={formData.discountedPrice || "Base price"}
+                          placeholder="Enter price"
                           value={variant.discountedPrice}
                           onChange={(e) => {
                             const updated = [...formData.sizeVariants];
@@ -681,9 +720,27 @@ export default function AddProductPage() {
                         {Math.round(((variant.originalPrice - variant.discountedPrice) / variant.originalPrice) * 100)}% OFF
                       </div>
                     )}
+                    {(!variant.originalPrice || !variant.discountedPrice) && (
+                      <div className="mt-2 text-xs text-orange-500 font-medium text-center">
+                        ⚠ Add both prices or this size won't be shown
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    sizeVariants: [...prev.sizeVariants, { size: "", originalPrice: "", discountedPrice: "" }]
+                  }));
+                }}
+                className="mt-3 w-full py-2 text-sm font-medium text-pink-600 bg-white border-2 border-dashed border-pink-300 rounded-lg hover:bg-pink-50 transition-colors"
+              >
+                + Add Size
+              </button>
             </div>
           )}
 

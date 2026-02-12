@@ -36,6 +36,7 @@ const AdminOrderList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -124,9 +125,34 @@ const AdminOrderList = () => {
           <p className="text-sm text-gray-600">Total: <span className="font-semibold">{orders.length}</span></p>
         </div>
 
+        {/* Status Filter */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {["All", "Placed", "Packed", "Shipped", "Delivered"].map((status) => {
+            const count = status === "All" ? orders.length : orders.filter(o => o.orderStatus === status).length;
+            return (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  statusFilter === status
+                    ? "bg-gray-900 text-white shadow-md"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+                }`}
+              >
+                {status === "Placed" && "📦 "}
+                {status === "Packed" && "📋 "}
+                {status === "Shipped" && "🚚 "}
+                {status === "Delivered" && "✅ "}
+                {status === "All" && "🛍️ "}
+                {status} ({count})
+              </button>
+            );
+          })}
+        </div>
+
         {/* Orders List */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {orders.map((order) => {
+          {(statusFilter === "All" ? orders : orders.filter(o => o.orderStatus === statusFilter)).map((order) => {
             const statusStyle = statusConfig[order.orderStatus] || statusConfig.Placed;
             const isExpanded = expandedOrder === order.id;
             
@@ -151,12 +177,27 @@ const AdminOrderList = () => {
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs font-semibold text-gray-500 mb-1">PRODUCTS</p>
                     <div className="space-y-1">
-                      {order.orderedProducts?.map((p, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-xs">
-                          <span className="text-gray-900">{p.name}</span>
-                          <span className="bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">× {p.quantity}</span>
-                        </div>
-                      ))}
+                      {order.orderedProducts?.map((p, idx) => {
+                        const productId = p._id || p.id || p.productId;
+                        return (
+                          <div key={idx} className="flex justify-between items-center text-xs">
+                            {productId ? (
+                              <a
+                                href={`https://www.dbangles.in/product/${productId}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                                title={`View product`}
+                              >
+                                {p.name}
+                              </a>
+                            ) : (
+                              <span className="text-gray-900">{p.name}</span>
+                            )}
+                            <span className="bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">× {p.quantity}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 

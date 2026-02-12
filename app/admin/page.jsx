@@ -35,7 +35,6 @@ const [loading, setLoading] = useState(true);
   
 
     const [orders, setOrders] = useState([]);
-    const [Pending, setPending] = useState(0);
     const [error, setError] = useState(null);
   
     useEffect(() => {
@@ -47,9 +46,6 @@ const [loading, setLoading] = useState(true);
           if (!res.ok) throw new Error("Failed to fetch orders");
           const data = await res.json();
           setOrders(data.length);
-          console.log(data);
-          const pendingCount = data.filter(order => order.status === "Pending").length;
-          setPending(pendingCount);
         } catch (err) {
           setError(err.message);
         } finally {
@@ -77,11 +73,9 @@ const [loading, setLoading] = useState(true);
         </header>
 
         {/* ================= STATS ROW ================= */}
-        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-2">
           <Stat title="Products" value={loading ? " " : count} />
           <Stat title="Orders" value={orders} />
-          <Stat title="Pending" value={loading ? " " : Pending} />
-          <Stat title="Revenue" value="₹84,200" highlight />
         </section>
 
         {/* ================= PRIMARY ACTION ================= */}
