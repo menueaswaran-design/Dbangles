@@ -179,21 +179,29 @@ const AdminOrderList = () => {
                     <div className="space-y-1">
                       {order.orderedProducts?.map((p, idx) => {
                         const productId = p._id || p.id || p.productId;
+                        const productSize = p.selectedSize || p.size || order.selectedSize || order.size;
                         return (
                           <div key={idx} className="flex justify-between items-center text-xs">
-                            {productId ? (
-                              <a
-                                href={`https://www.dbangles.in/product/${productId}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline underline-offset-2"
-                                title={`View product`}
-                              >
-                                {p.name}
-                              </a>
-                            ) : (
-                              <span className="text-gray-900">{p.name}</span>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {productId ? (
+                                <a
+                                  href={`https://www.dbangles.in/product/${productId}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                                  title={`View product`}
+                                >
+                                  {p.name}
+                                </a>
+                              ) : (
+                                <span className="text-gray-900">{p.name}</span>
+                              )}
+                              {productSize && (
+                                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                  Size: {productSize}
+                                </span>
+                              )}
+                            </div>
                             <span className="bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-bold">× {p.quantity}</span>
                           </div>
                         );
@@ -257,6 +265,14 @@ const AdminOrderList = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* Size Info */}
+                      {order.size && (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded p-2">
+                          <p className="text-xs font-semibold text-gray-500 mb-1">SIZE</p>
+                          <p className="text-sm font-bold text-indigo-700">{order.size}</p>
+                        </div>
+                      )}
 
                       {/* Current Status */}
                       <div className={`${statusStyle.bg} border ${statusStyle.border} rounded p-2`}>

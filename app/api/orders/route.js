@@ -53,6 +53,12 @@ export async function POST(req) {
       );
     }
 
+    // Ensure each product in orderedProducts carries its size
+    const productsWithSize = orderedProducts.map((p) => ({
+      ...p,
+      size: p.size || size || "", // per-product size, fallback to order-level size
+    }));
+
     const newOrder = {
       customerName,
       phoneNumber,
@@ -62,10 +68,10 @@ export async function POST(req) {
       city,
       pincode,
       orderMessage,
-      orderedProducts,
+      orderedProducts: productsWithSize,
       userId, // Add userId to order
       userEmail, // Add userEmail to order
-      size: size || "", // Product size
+      size: size || "", // Order-level size (backward compat)
       shipping: shipping || 70, // Shipping charge, default 70
       orderStatus: "Placed", // Default status
       createdAt: serverTimestamp(),
