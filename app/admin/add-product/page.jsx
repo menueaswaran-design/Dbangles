@@ -120,22 +120,23 @@ export default function AddProductPage() {
       const bangles = categoriesData
         .filter(cat => cat.productType === "bangles")
         .map(cat => cat.name)
+        .filter(name => name.toLowerCase() !== "saree pins" && name.toLowerCase() !== "saree pin")
         .sort();
-      
+
       const dresses = categoriesData
         .filter(cat => cat.productType === "dresses")
         .map(cat => cat.name)
+        .filter(name => name.toLowerCase() !== "saree pins" && name.toLowerCase() !== "saree pin")
         .sort();
-      
-      // If no categories exist, add default ones
+
+      // If no categories exist, add default ones (excluding saree pins)
       if (bangles.length === 0) {
         const defaultBangles = [
           "Kundan bangles",
           "Glass bangles",
           "Bracelets",
           "Hair accessories",
-          "Saree pins",
-          "Invisible chains",
+          "Invisible chains"
         ];
         for (const cat of defaultBangles) {
           await saveCategory(cat, "bangles");
@@ -144,7 +145,7 @@ export default function AddProductPage() {
       } else {
         setBangleCategories(bangles);
       }
-      
+
       if (dresses.length === 0) {
         const defaultDresses = ["Sarees", "Unstitched chudi material"];
         for (const cat of defaultDresses) {
